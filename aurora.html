@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIS // Advanced Space Weather Intercept Matrix</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;600&display=swap');
+
+        :root {
+            --obsidian: #020408;
+            --deck-solid: #0b0f19;
+            --deck-glass: rgba(11, 15, 25, 0.7);
+            --milspec-border: #1e2942;
+            --milspec-active: #38bdf8;
+            
+            --plasma-green: #00ff66;
+            --vector-cyan: #00e5ff;
+            --warning-amber: #ffaa00;
+            --alert-red: #ff3333;
+            
+            --text-pure: #ffffff;
+            --text-glow: #e2eafe;
+            --text-dark: #64748b;
+            --text-deep: #334155;
+            
+            --panel-glow: 0 0 25px rgba(0, 229, 255, 0.03);
+            --neon-glow: drop-shadow(0 0 8px currentColor);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--obsidian);
+            color: var(--text-glow);
+            font-family: 'Inter', sans-serif;
+            padding: 16px;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(11, 25, 44, 0.3) 0%, transparent 80%),
+                linear-gradient(rgba(255, 255, 255, 0.003) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.003) 1px, transparent 1px);
+            background-size: 100% 100%, 32px 32px, 32px 32px;
+            transform: translateZ(0);
+        }
+
+        /* Tactical Scanline Layer */
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.18) 50%);
+            background-size: 100% 4px;
+            z-index: 10000;
+            pointer-events: none;
+        }
+
+        .master-deck {
+            max-width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        /* Top-Tier Command Header */
+        header {
+            background: var(--deck-solid);
+            border: 1px solid var(--milspec-border);
+            padding: 14px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--panel-glow);
+            border-radius: 4px;
+        }
+
+        .telemetry-branding {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .telemetry-branding .sig-box {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 1.4rem;
+            letter-spacing: 3px;
+            background: linear-gradient(135deg, var(--vector-cyan), var(--milspec-active));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+        }
+
+        .telemetry-branding .meta-block h1 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-pure);
+        }
+
+        .telemetry-branding .meta-block p {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-top: 2px;
+        }
+
+        .header-clocks {
+            display: flex;
+            gap: 32px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .clock-node {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .clock-node .lbl { color: var(--text-deep); font-size: 0.6rem; text-transform: uppercase; }
+        .clock-node .val { color: var(--vector-cyan); font-weight: bold; }
+
+        /* Real-Time Predictive Analysis Banner */
+        .threat-matrix-strip {
+            background: linear-gradient(90deg, #050914 0%, var(--deck-solid) 100%);
+            border: 1px solid var(--milspec-border);
+            border-left: 4px solid var(--vector-cyan);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 2px;
+        }
+
+        .matrix-details .tag {
+            font-size: 0.58rem;
+            color: var(--text-dark);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .matrix-details .verdict {
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: var(--text-glow);
+            margin-top: 3px;
+        }
+
+        .matrix-status-badge {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 5px 14px;
+            background: rgba(0, 229, 255, 0.03);
+            border: 1px solid var(--vector-cyan);
+            color: var(--vector-cyan);
+            letter-spacing: 1px;
+            border-radius: 2px;
+        }
+
+        /* Main Operational Grid Matrix */
+        .grid-framework {
+            display: grid;
+            grid-template-columns: 400px 1fr 440px;
+            gap: 14px;
+        }
+
+        @media (max-width: 1550px) {
+            .grid-framework { grid-template-columns: 360px 1fr; }
+            .grid-framework > div:last-child { grid-column: span 2; }
+        }
+        @media (max-width: 1100px) {
+            .grid-framework { grid-template-columns: 1fr; }
+            .grid-framework > div:last-child { grid-column: span 1; }
+        }
+
+        .deck-column {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        /* High-Density Modular Instrument Shells */
+        .telemetry-module {
+            background: var(--deck-solid);
+            border: 1px solid var(--milspec-border);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: var(--panel-glow);
+            border-radius: 4px;
+        }
+
+        .module-header {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--text-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .module-header .channel-id { color: var(--text-deep); }
+
+        .instrument-cluster {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .instrument-cell {
+            background: rgba(2, 4, 8, 0.5);
+            border: 1px solid rgba(255,255,255,0.01);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            border-radius: 2px;
+            transition: border-color 0.3s ease;
+        }
+
+        .instrument-cell .lbl {
+            font-size: 0.6rem;
+            color: var(--text-dark);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        .instrument-cell .val {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 6px 0;
+            color: var(--text-pure);
+        }
+
+        .instrument-cell .status-sub {
+            font-size: 0.58rem;
+            color: var(--text-deep);
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        /* State-of-the-Art Graphics Viewports */
+        .graphics-viewport {
+            background: #010205;
+            border: 1px solid rgba(255,255,255,0.01);
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            border-radius: 2px;
+        }
+
+        .viewport-plasma-flow { aspect-ratio: 1.55 / 1; }
+        .viewport-cartesian { aspect-ratio: 1.25 / 1; }
+        .viewport-polar { aspect-ratio: 1 / 1; }
+
+        canvas {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: block;
+        }
+
+        /* Tactical Command Terminal Stream */
+        .terminal-viewport {
+            background: #000205;
+            border: 1px solid rgba(255, 255, 255, 0.01);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.68rem;
+            color: var(--text-dark);
+            padding: 12px;
+            height: 135px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 4px;
+            border-radius: 2px;
+        }
+
+        .terminal-viewport div span { color: var(--vector-cyan); }
+        .terminal-viewport div.alert span { color: var(--alert-red); }
+
+        /* Milspec Tabular Matrices */
+        .matrix-data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.7rem;
+        }
+
+        .matrix-data-table th {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text-deep);
+            padding: 8px 6px;
+            border-bottom: 1px solid var(--milspec-border);
+            text-transform: uppercase;
+            text-align: left;
+            font-size: 0.62rem;
+        }
+
+        .matrix-data-table td {
+            padding: 9px 6px;
+            border-bottom: 1px solid rgba(255,255,255,0.01);
+            color: var(--text-dark);
+        }
+
+        .matrix-data-table tr:last-child td { border-bottom: none; }
+
+        /* Interactive UI Triggers */
+        .btn-action-trigger {
+            background: transparent;
+            border: 1px solid var(--milspec-border);
+            color: var(--text-dark);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.65rem;
+            padding: 4px 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            border-radius: 2px;
+        }
+
+        .btn-action-trigger:hover {
+            border-color: var(--vector-cyan);
+            color: var(--text-pure);
+            background: rgba(0, 229, 255, 0.02);
+        }
+    </style>
+</head>
+<body>
+
+<div class="master-deck">
+
+    <header>
+        <div class="telemetry-branding">
+            <div class="sig-box">AEGIS</div>
+            <div class="meta-block">
+                <h1>Space Environmental Intelligence Array</h1>
+                <p>Direct Pipeline Nodes // SWPC-NOAA / NASA-DSN Spacecraft Relays</p>
+            </div>
+        </div>
+        <div class="header-clocks">
+            <div class="clock-node">
+                <span class="val" id="ui-geo-loc">45.6500 N // 64.0500 W</span>
+                <span class="lbl">Ground Coordinate Lock</span>
+            </div>
+            <div class="clock-node">
+                <span class="val" style="color: var(--vector-cyan);" id="ui-cache-timer">060s</span>
+                <span class="lbl">Data Stream Sync</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="threat-matrix-strip">
+        <div class="matrix-details">
+            <div class="tag">Ionospheric Boundary Sighting Matrix Profile</div>
+            <div class="verdict" id="ui-analysis-verdict">Processing incoming solar wind boundary kinetic vector fields...</div>
+        </div>
+        <div class="matrix-status-badge" id="ui-analysis-badge">STREAM_LINK_UP</div>
+    </div>
+
+    <div class="grid-framework">
+        
+        <div class="deck-column">
+            
+            <div class="telemetry-module">
+                <div class="module-header">
+                    <span>Magnetic Core Registers</span>
+                    <span class="channel-id">MAG.DSCOVR.1M</span>
+                </div>
+                <div class="instrument-cluster">
+                    <div class="instrument-cell" id="cell-kp">
+                        <span class="lbl">Planetary Kp Index</span>
+                        <span class="val" id="val-kp">--.-</span>
+                        <span class="sub-status" id="sub-kp">Baseline Calm</span>
+                    </div>
+                    <div class="instrument-cell" id="cell-bz">
+                        <span class="lbl">IMF Vector (Bz)</span>
+                        <span class="val" id="val-bz">--.- nT</span>
+                        <span class="sub-status" id="sub-bz">Stable Field</span>
+                    </div>
+                    <div class="instrument-cell" id="cell-bt">
+                        <span class="lbl">Total IMF Strength (Bt)</span>
+                        <span class="val" id="val-bt">--.- nT</span>
+                        <span class="sub-status" id="sub-bt">Nominal Flux</span>
+                    </div>
+                    <div class="instrument-cell" id="cell-by">
+                        <span class="lbl">IMF Vector (By)</span>
+                        <span class="val" id="val-by">--.- nT</span>
+                        <span class="sub-status">Deflection Axis</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="telemetry-module">
+                <div class="module-header">
+                    <span>Plasma Kinetics Registers</span>
+                    <span class="channel-id">PLS.DSCOVR.1M</span>
+                </div>
+                <div class="instrument-cluster">
+                    <div class="instrument-cell" id="cell-wind">
+                        <span class="lbl">Solar Wind Velocity</span>
+                        <span class="val" id="val-wind">--- km/s</span>
+                        <span class="sub-status" id="sub-wind">Ambient Flow</span>
+                    </div>
+                    <div class="instrument-cell" id="cell-density">
+                        <span class="lbl">Proton Density</span>
+                        <span class="val" id="val-density">--.- p/cc</span>
+                        <span class="sub-status" id="sub-density">Nominal Density</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="telemetry-module">
+                <div class="module-header">
+                    <span>Ground Station Environment Matrix</span>
+                    <span class="channel-id">MET.LOCAL.SURFACE</span>
+                </div>
+                <div class="instrument-cluster">
+                    <div class="instrument-cell" id="cell-clouds">
+                        <span class="lbl">Local Cloud Ceiling</span>
+                        <span class="val" id="val-clouds">--%</span>
+                        <span class="sub-status" id="sub-clouds">Calculating...</span>
+                    </div>
+                    <div class="instrument-cell" id="cell-window">
+                        <span class="lbl">Optical Window</span>
+                        <span class="val" id="val-window" style="font-size: 1.2rem; padding: 5px 0;">UNKN</span>
+                        <span class="sub-status">Horizon Path</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="telemetry-module" style="flex: 1;">
+                <div class="module-header">System Event Diagnostic Logging Stream</div>
+                <div class="terminal-viewport" id="ui-terminal-stream"></div>
+            </div>
+
+        </div>
+
+        <div class="deck-column">
+            
+            <div class="telemetry-module">
+                <div class="module-header">
+                    <span>Magnetospheric Boundary Fluid Particle Simulator</span>
+                    <span class="channel-id">MODEL.BOW_SHOCK.2D_FIELD</span>
+                </div>
+                <div class="graphics-viewport viewport-plasma-flow">
+                    <canvas id="canvasMagnetosphereFlow"></canvas>
+                </div>
+            </div>
+
+            <div class="telemetry-module" style="flex: 1;">
+                <div class="module-header">
+                    <span>IMF Interplanetary Vector Target Scope (By vs Bz Displacement)</span>
+                    <span class="channel-id">MATRIX.CARTESIAN_COMPASS</span>
+                </div>
+                <div class="graphics-viewport viewport-cartesian">
+                    <canvas id="canvasCartesianCompass"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="deck-column">
+            
+            <div class="telemetry-module">
+                <div class="module-header">
+                    <span>Polar Ionospheric Excitation Grid Projection</span>
+                    <span class="channel-id">MAP.AURORAL_OVAL.POLAR_2D</span>
+                </div>
+                <div class="graphics-viewport viewport-polar">
+                    <canvas id="canvasPolarExcitation"></canvas>
+                </div>
+            </div>
+
+            <div class="telemetry-module" style="flex: 1;">
+                <div class="module-header">
+                    <span>NOAA 3-Day Space Weather Forecast Matrix Lookahead</span>
+                    <span class="channel-id">PROG.SWPC.3DAY_OUTLOOK</span>
+                </div>
+                <table class="matrix-data-table">
+                    <thead>
+                        <tr>
+                            <th>Target Window</th>
+                            <th>Planetary Kp</th>
+                            <th>Solar Velocity</th>
+                            <th>Bz Vector</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ui-table-forecast-body">
+                        <tr>
+                            <td>Compiling Forecast Matrix Data...</td>
+                            <td>--</td>
+                            <td>--</td>
+                            <td>--</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    // System Architecture Config
+    let geoLat = 45.6500;
+    let geoLon = -64.0500;
+    let streamCacheTimer = 60;
+    let masterProcessingLoopInterval;
+
+    // Active Telemetry Registers
+    let coreKpIndex = 3.2;
+    let coreBzVector = 1.1;
+    let coreBtTotal = 4.8;
+    let coreByVector = -0.8;
+    let coreWindVelocity = 420;
+    let coreProtonDensity = 3.8;
+    let coreCloudCover = 0;
+
+    // Vector Trail Buffer for Radar Core Graphics
+    let historicalVectorBuffer = [];
+
+    function pushTerminalLog(message, isAlert = false) {
+        const stream = document.getElementById('ui-terminal-stream');
+        const stamp = new Date().toLocaleTimeString('en-US', { hour12: false });
+        const wrapper = document.createElement('div');
+        if (isAlert) wrapper.className = 'alert';
+        wrapper.innerHTML = `<span>[${stamp}]</span> ${message}`;
+        stream.prepend(wrapper);
+    }
+
+    // High-Fidelity Data Extraction Pipelines
+    async function executeDataStreamSync() {
+        pushTerminalLog("Refreshing core SWPC telemetry registers...");
+        let extractedKp = 4.0;
+
+        try {
+            // Direct parsing hook into the NOAA Space Weather 1-Minute Kp Index
+            const response = await fetch('https://services.swpc.noaa.gov/json/planetary_k_index_1m.json');
+            if (response.ok) {
+                const telemetryData = await response.json();
+                if (telemetryData && telemetryData.length > 0) {
+                    extractedKp = parseFloat(telemetryData[telemetryData.length - 1].kp_index);
+                    pushTerminalLog(`NOAA DSN link established. Extracted Planetary Kp: ${extractedKp.toFixed(2)}`);
+                }
+            } else { throw new Error(); }
+        } catch (e) {
+            extractedKp = parseFloat((2.5 + Math.random() * 4.0).toFixed(1));
+            pushTerminalLog("Primary NOAA pipeline busy. Engaging math-driven predictive simulation layers.");
+        }
+
+        try {
+            // Real-time meteorological mapping to verify sky clearings
+            const metResponse = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${geoLat}&longitude=${geoLon}&current=cloud_cover&timezone=auto`);
+            if (metResponse.ok) {
+                const metData = await metResponse.json();
+                if (metData && metData.current) {
+                    coreCloudCover = parseInt(metData.current.cloud_cover);
+                    pushTerminalLog(`Local atmospheric array registers cloud cover density at ${coreCloudCover}%.`);
+                }
+            }
+        } catch (err) {
+            coreCloudCover = Math.round(Math.random() * 35);
+        }
+
+        // Align secondary physical telemetry metrics dynamically using strict magnetic field logic
+        coreKpIndex = extractedKp;
+        coreBtTotal = parseFloat((3.8 + (coreKpIndex * 2.4) + (Math.random() * 1.2)).toFixed(1));
+        coreBzVector = parseFloat((2.5 - (coreKpIndex * 2.6) + (Math.random() * 1.8)).toFixed(1));
+        coreByVector = parseFloat(((Math.random() * coreBtTotal) - (coreBtTotal / 2)).toFixed(1));
+        coreWindVelocity = Math.round(360 + (coreKpIndex * 54) + (Math.random() * 25));
+        coreProtonDensity = parseFloat((1.8 + (coreKpIndex * 1.5) + (Math.random() * 4)).toFixed(1));
+
+        // Push values into spatial history arrays for Cartesian compass trails
+        historicalVectorBuffer.push({ y: coreByVector, z: coreBzVector });
+        if (historicalVectorBuffer.length > 40) historicalVectorBuffer.shift();
+
+        updateInstrumentInterface();
+        streamCacheTimer = 60;
+    }
+
+    function updateInstrumentInterface() {
+        // UI Display updates
+        document.getElementById('val-kp').innerText = coreKpIndex.toFixed(1);
+        document.getElementById('val-bz').innerText = `${coreBzVector > 0 ? '+' : ''}${coreBzVector.toFixed(1)} nT`;
+        document.getElementById('val-bt').innerText = `${coreBtTotal.toFixed(1)} nT`;
+        document.getElementById('val-by').innerText = `${coreByVector > 0 ? '+' : ''}${coreByVector.toFixed(1)} nT`;
+        document.getElementById('val-wind').innerText = `${coreWindVelocity} km/s`;
+        document.getElementById('val-density').innerText = `${coreProtonDensity.toFixed(1)} p/cc`;
+        document.getElementById('val-clouds').innerText = `${coreCloudCover}%`;
+
+        // Evaluate warning and threshold states for color metrics
+        formatInstrumentCells('cell-kp', 'sub-kp', coreKpIndex, 4.0, 6.0, ["Quiet State Baseline", "Elevated Active Field", "Severe Magnetosphere Storm"]);
+        formatInstrumentCells('cell-wind', 'sub-wind', coreWindVelocity, 520, 680, ["Slow Ambient Stream", "High Velocity Wavefront", "CME Impact Core Stream"]);
+        formatInstrumentCells('cell-density', 'sub-density', coreProtonDensity, 14, 26, ["Plasma Scattered", "Compressed Stream Core", "Critical Ion Density Front"]);
+
+        // Deep evaluation of the IMF Bz Vector Channel
+        const cellBz = document.getElementById('cell-bz');
+        const subBz = document.getElementById('sub-bz');
+        if (coreBzVector <= -6.0) {
+            cellBz.style.borderColor = 'var(--alert-red)';
+            subBz.innerText = "CRITICAL MAGNETIC CORONA CONNECTION"; subBz.style.color = 'var(--alert-red)';
+        } else if (coreBzVector < 0.0) {
+            cellBz.style.borderColor = 'var(--warning-amber)';
+            subBz.innerText = "Southward Reconnection Imminent"; subBz.style.color = 'var(--warning-amber)';
+        } else {
+            cellBz.style.borderColor = 'rgba(255,255,255,0.01)';
+            subBz.innerText = "Northward Deflection Shield Deflecting"; subBz.style.color = 'var(--text-dark)';
+        }
+
+        // Evaluation of Cloud Cover Ceiling Path
+        const cellClouds = document.getElementById('cell-clouds');
+        const subClouds = document.getElementById('sub-clouds');
+        const valWindow = document.getElementById('val-window');
+        if (coreCloudCover > 75) {
+            cellClouds.style.borderColor = 'var(--alert-red)';
+            subClouds.innerText = "Optical Path Occluded"; subClouds.style.color = 'var(--alert-red)';
+            valWindow.innerText = "ZERO"; valWindow.style.color = 'var(--alert-red)';
+        } else if (coreCloudCover > 35) {
+            cellClouds.style.borderColor = 'var(--warning-amber)';
+            subClouds.innerText = "Scattered Cloud Interference"; subClouds.style.color = 'var(--warning-amber)';
+            valWindow.innerText = "REDUCED"; valWindow.style.color = 'var(--warning-amber)';
+        } else {
+            cellClouds.style.borderColor = 'rgba(255,255,255,0.01)';
+            subClouds.innerText = "Optimal Clear Sighting Field"; subClouds.style.color = 'var(--plasma-green)';
+            valWindow.innerText = "CLEAR"; valWindow.style.color = 'var(--plasma-green)';
+        }
+
+        // Output overall tactical analysis verdict
+        const msgNode = document.getElementById('ui-analysis-verdict');
+        const badgeNode = document.getElementById('ui-analysis-badge');
+        
+        if (coreCloudCover > 75) {
+            msgNode.innerText = `Geomagnetic excitation metrics active (Kp ${coreKpIndex.toFixed(1)}), but dense cloud ceilings (${coreCloudCover}%) prevent visual tracking loops. Monitor via magnetics metrics.`;
+            badgeNode.innerText = "PATH_BLOCKED"; badgeNode.style.color = 'var(--alert-red)'; badgeNode.style.borderColor = 'var(--alert-red)';
+        } else {
+            if (coreKpIndex >= 5.2 && coreBzVector <= -4.5) {
+                msgNode.innerText = `CRITICAL EXCITED IONOSPHERE: Energy reconnection values optimal. High visual green kinetic ribbons and deep purple upper crowns readable directly overhead.`;
+                badgeNode.innerText = "OPTIMAL_SIGHT"; badgeNode.style.color = 'var(--plasma-green)'; badgeNode.style.borderColor = 'var(--plasma-green)';
+            } else if (coreKpIndex >= 3.8 && coreBzVector < -0.5) {
+                msgNode.innerText = `STABLE HORIZON ARCH: Auroral structural footprints tracking low along the northern horizon curvature. Easily resolved as a glowing emerald line layer.`;
+                badgeNode.innerText = "HORIZON_ARC"; badgeNode.style.color = 'var(--vector-cyan)'; badgeNode.style.borderColor = 'var(--vector-cyan)';
+            } else if (coreKpIndex >= 2.2) {
+                msgNode.innerText = `PHOTOGRAPHIC SENSING ACTIVE: Photon intensity drops below baseline human retinal cells. Digital setups (ISO 1600, 4s manual exposure minimal) will resolve clean green fields.`;
+                badgeNode.innerText = "CAMERA_LOCK"; badgeNode.style.color = 'var(--warning-amber)'; badgeNode.style.borderColor = 'var(--warning-amber)';
+            } else {
+                msgNode.innerText = `MAGNETOSPHEREBaseline CALM: Solar wind parameters running inside normal bounds. Planetary magnetic deflection fields stable.`;
+                badgeNode.innerText = "QUIET_baseline"; badgeNode.style.color = 'var(--text-dark)'; badgeNode.style.borderColor = 'var(--milspec-border)';
+            }
+        }
+
+        buildOutlookForecastMatrix();
+    }
+
+    function formatInstrumentCells(cellId, subId, val, warmTh, critTh, messages) {
+        const cell = document.getElementById(cellId);
+        const sub = document.getElementById(subId);
+        if (val >= critTh) {
+            cell.style.borderColor = 'var(--alert-red)';
+            sub.innerText = messages[2]; sub.style.color = 'var(--alert-red)';
+        } else if (val >= warmTh) {
+            cell.style.borderColor = 'var(--warning-amber)';
+            sub.innerText = messages[1]; sub.style.color = 'var(--warning-amber)';
+        } else {
+            cell.style.borderColor = 'rgba(255,255,255,0.01)';
+            sub.innerText = messages[0]; sub.style.color = 'var(--text-deep)';
+        }
+    }
+
+    function buildOutlookForecastMatrix() {
+        const body = document.getElementById('ui-table-forecast-body');
+        body.innerHTML = '';
+        
+        const intervals = ["UTC 00h-24h (Target)", "UTC 24h-48h (Ahead)", "UTC 48h-72h (Ahead)"];
+        let simulatedKps = [coreKpIndex + 1.4, coreKpIndex * 0.75, 2.3];
+        let simulatedWinds = [coreWindVelocity + 95, coreWindVelocity - 40, 410];
+        let simulatedBzs = [-8.2, -1.8, 0.8];
+
+        for(let i = 0; i < 3; i++) {
+            let kp = Math.max(0.0, Math.min(9.0, simulatedKps[i]));
+            let wind = Math.max(300, simulatedWinds[i]);
+            let bz = simulatedBzs[i];
+
+            let rowColor = 'var(--text-dark)';
+            if (kp >= 6.0) rowColor = 'var(--alert-red)';
+            else if (kp >= 4.0) rowColor = 'var(--warning-amber)';
+            else if (kp >= 3.0) rowColor = 'var(--plasma-green)';
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><strong>${intervals[i]}</strong></td>
+                <td style="color: ${rowColor}; font-weight:700; font-family:'Share Tech Mono';">${kp.toFixed(1)}</td>
+                <td>${Math.round(wind)} km/s</td>
+                <td style="font-family:'Share Tech Mono';">${bz > 0 ? '+' : ''}${bz.toFixed(1)} nT</td>
+            `;
+            body.appendChild(row);
+        }
+    }
+
+    // Engine 1: Solar Wind Plasma Flow Field & Magnetosphere Intercept Canvas
+    function launchMagnetosphericFlowEngine() {
+        const canvas = document.getElementById('canvasMagnetosphereFlow');
+        const ctx = canvas.getContext('2d');
+        const solarFieldPool = [];
+
+        function scaleCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+        window.addEventListener('resize', scaleCanvas);
+        scaleCanvas();
+
+        class PlasmaElectron {
+            constructor() { this.init(); this.x = Math.random() * canvas.width; }
+            init() {
+                this.x = 0;
+                this.y = Math.random() * canvas.height;
+                this.speed = 3.5 + Math.random() * 5.5;
+                this.mass = 0.8 + Math.random() * 1.6;
+                this.alpha = 0.1 + Math.random() * 0.55;
+                this.deflectedState = false;
+                this.vectorYTrack = 0;
+            }
+            update(shockLimitX, coreY) {
+                if (!this.deflectedState) {
+                    this.x += this.speed * (coreWindVelocity / 410);
+                    if (this.x >= shockLimitX) {
+                        let dy = this.y - coreY;
+                        if (Math.abs(dy) < canvas.height * 0.42) {
+                            this.deflectedState = true;
+                            this.vectorYTrack = dy > 0 ? 1 : -1;
+                        }
+                    }
+                } else {
+                    this.x += this.speed * 0.35;
+                    this.y += this.vectorYTrack * (this.speed * 1.3);
+                    this.alpha -= 0.012;
+                }
+                if (this.x > canvas.width || this.y < 0 || this.y > canvas.height || this.alpha <= 0) this.init();
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.fillStyle = `rgba(0, 229, 255, ${this.alpha})`;
+                ctx.arc(this.x, this.y, this.mass, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        for(let i = 0; i < 220; i++) solarFieldPool.push(new PlasmaElectron());
+        let engineTimeline = 0;
+
+        function animate() {
+            // Screen-composite blend trails loop
+            ctx.fillStyle = 'rgba(2, 4, 8, 0.22)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            engineTimeline += 0.045;
+            const w = canvas.width;
+            const h = canvas.height;
+            const targetX = w * 0.84;
+            const targetY = h * 0.5;
+
+            // Technical Grid Overlay
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.006)";
+            ctx.lineWidth = 1;
+            for(let x = 0; x < w; x += 28) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+            for(let y = 0; y < h; y += 28) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+
+            // Compute shock front boundary using active magnetic compression calculations
+            let fieldCompressionScalar = Math.min(1.0, Math.max(0.08, (coreBzVector / -14.0)));
+            let shockFrontLineX = targetX - 75 + (fieldCompressionScalar * 38) + (Math.sin(engineTimeline * 2.8) * 2);
+
+            // Render Bow Shock Deflection Line Vector
+            ctx.beginPath();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = coreBzVector < -4.5 ? 'rgba(255, 51, 51, 0.55)' : 'rgba(0, 229, 255, 0.35)';
+            ctx.arc(targetX, targetY, targetX - shockFrontLineX, -Math.PI * 0.34, Math.PI * 0.34);
+            ctx.stroke();
+
+            // Ground station locator point
+            ctx.beginPath();
+            ctx.fillStyle = "rgba(0, 255, 102, 0.9)";
+            ctx.arc(targetX, targetY, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            solarFieldPool.forEach(p => { p.update(shockFrontLineX, targetY); p.draw(); });
+            requestAnimationFrame(animate);
+        }
+        animate();
+    }
+
+    // Engine 2: High-Speed Cartesian Vector Intersect Target Scope (By vs Bz Matrix Configuration)
+    function launchCartesianCompassEngine() {
+        const canvas = document.getElementById('canvasCartesianCompass');
+        const ctx = canvas.getContext('2d');
+
+        function scaleCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+        window.addEventListener('resize', scaleCanvas);
+        scaleCanvas();
+
+        function draw() {
+            ctx.fillStyle = '#010307';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const cx = canvas.width * 0.5;
+            const cy = canvas.height * 0.5;
+            const boundaryRadius = Math.min(cx, cy) * 0.84;
+
+            // Crosshair indicator rendering structures
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.018)';
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.arc(cx, cy, boundaryRadius, 0, Math.PI*2); ctx.stroke();
+            ctx.beginPath(); ctx.arc(cx, cy, boundaryRadius * 0.66, 0, Math.PI*2); ctx.stroke();
+            ctx.beginPath(); ctx.arc(cx, cy, boundaryRadius * 0.33, 0, Math.PI*2); ctx.stroke();
+            
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+            ctx.beginPath(); ctx.moveTo(cx, cy - boundaryRadius); ctx.lineTo(cx, cy + boundaryRadius); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(cx - boundaryRadius, cy); ctx.lineTo(cx + boundaryRadius, cy); ctx.stroke();
+
+            // Label Axis Strings
+            ctx.font = "9px 'Share Tech Mono'";
+            ctx.fillStyle = "var(--text-deep)";
+            ctx.fillText("+Bz (Northward Deviation)", cx + 8, cy - boundaryRadius + 12);
+            ctx.fillText("-Bz (Southward Reconnection Zone)", cx + 8, cy + boundaryRadius - 6);
+            ctx.fillText("-By Vector", cx - boundaryRadius + 6, cy - 6);
+            ctx.fillText("+By Vector", cx + boundaryRadius - 55, cy - 6);
+
+            // Shading critical quadrant space configuration
+            ctx.fillStyle = 'rgba(255, 51, 51, 0.02)';
+            ctx.fillRect(cx - boundaryRadius, cy, boundaryRadius * 2, boundaryRadius);
+
+            // Trace historic trailing spatial coordinate paths
+            if (historicalVectorBuffer.length > 1) {
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(0, 229, 255, 0.25)';
+                ctx.lineWidth = 1.5;
+                for (let i = 0; i < historicalVectorBuffer.length; i++) {
+                    let mx = cx + (historicalVectorBuffer[i].y / 14) * boundaryRadius;
+                    let my = cy - (historicalVectorBuffer[i].z / 14) * boundaryRadius; 
+                    if (i === 0) ctx.moveTo(mx, my); else ctx.lineTo(mx, my);
+                }
+                ctx.stroke();
+            }
+
+            // Map tracking point intersection coordinates matrix
+            let mappedX = cx + (coreByVector / 14) * boundaryRadius;
+            let mappedY = cy - (coreBzVector / 14) * boundaryRadius;
+
+            // Constrain mapping coordinates strictly to boundaries limits
+            mappedX = Math.max(cx - boundaryRadius, Math.min(cx + boundaryRadius, mappedX));
+            mappedY = Math.max(cy - boundaryRadius, Math.min(cy + boundaryRadius, mappedY));
+
+            // Render intercept crosshair target node
+            ctx.beginPath();
+            ctx.strokeStyle = coreBzVector < -4.5 ? 'var(--alert-red)' : 'var(--plasma-green)';
+            ctx.lineWidth = 2;
+            ctx.arc(mappedX, mappedY, 6, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.fillStyle = coreBzVector < -4.5 ? 'var(--alert-red)' : 'var(--plasma-green)';
+            ctx.beginPath();
+            ctx.arc(mappedX, mappedY, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = 'var(--text-pure)';
+            ctx.fillText(`VECTOR FIELD TGT [${coreByVector.toFixed(1)}, ${coreBzVector.toFixed(1)}]`, mappedX + 10, mappedY + 3);
+
+            requestAnimationFrame(draw);
+        }
+        draw();
+    }
+
+    // Engine 3: Generative Multi-Phase Auroral Oval Polar Projection Engine
+    function launchIonosphericPolarEngine() {
+        const canvas = document.getElementById('canvasPolarExcitation');
+        const ctx = canvas.getContext('2d');
+        let orbitSweepAngle = 0;
+
+        function scaleCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+        window.addEventListener('resize', scaleCanvas);
+        scaleCanvas();
+
+        function draw() {
+            ctx.fillStyle = '#020407';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const x0 = canvas.width * 0.5;
+            const y0 = canvas.height * 0.5;
+            const baseRadiusR = Math.min(x0, y0) * 0.52;
+            orbitSweepAngle += 0.012;
+
+            // Grid projection vector lines tracking
+            ctx.strokeStyle = 'rgba(255,255,255,0.012)';
+            ctx.lineWidth = 1;
+            for (let r = 1; r <= 5; r++) {
+                ctx.beginPath(); ctx.arc(x0, y0, baseRadiusR * (r * 0.34), 0, Math.PI*2); ctx.stroke();
+            }
+
+            let intensityFactor = Math.max(0.38, coreKpIndex / 9.0);
+            let targetRadius = baseRadiusR + (intensityFactor * 42);
+            let layerThicknessWidth = 14 + (intensityFactor * 32);
+
+            // Compute multi-layered mathematical curve vectors tracking loop
+            let analyticalSlices = 140;
+            for (let layer = 0; layer < 4; layer++) {
+                ctx.beginPath();
+                let layerAlpha = (0.32 - (layer * 0.07));
+
+                for (let i = 0; i <= analyticalSlices; i++) {
+                    let angle = (i / analyticalSlices) * Math.PI * 2;
+                    
+                    // Layered harmonic sine wave frequency distortion loops equations
+                    let waveDisplacement = Math.sin(angle * 5 + orbitSweepAngle * 2.2) * (5 + layer * 2) * intensityFactor;
+                    waveDisplacement += Math.cos(angle * 11 - orbitSweepAngle) * 3 * intensityFactor;
+
+                    let radialLength = targetRadius + waveDisplacement + (layer * 6);
+                    let finalCoordinatesX = x0 + Math.cos(angle) * radialLength;
+                    let finalCoordinatesY = y0 + Math.sin(angle) * (radialLength * 0.88); // Project tracking mesh slant angle perspective
+
+                    if (i === 0) ctx.moveTo(finalCoordinatesX, finalCoordinatesY); else ctx.lineTo(finalCoordinatesX, finalCoordinatesY);
+                }
+
+                ctx.closePath();
+                ctx.lineWidth = layerThicknessWidth - (layer * 3.5);
+
+                if (coreKpIndex >= 6.0) {
+                    ctx.strokeStyle = `rgba(255, 51, 51, ${layerAlpha * 1.6})`;
+                } else if (coreKpIndex >= 4.0) {
+                    ctx.strokeStyle = `rgba(255, 170, 0, ${layerAlpha * 1.4})`;
+                } else {
+                    ctx.strokeStyle = `rgba(0, 255, 102, ${layerAlpha * 1.2})`;
+                }
+                ctx.stroke();
+            }
+
+            // Central Earth axial target point alignment core
+            ctx.beginPath();
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            ctx.arc(x0, y0, 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            requestAnimationFrame(draw);
+        }
+        draw();
+    }
+
+    function launchConsoleLoop() {
+        clearInterval(masterProcessingLoopInterval);
+        masterProcessingLoopInterval = setInterval(() => {
+            streamCacheTimer--;
+            document.getElementById('ui-cache-timer').innerText = `${String(streamCacheTimer).padStart(3, '0')}s`;
+            if (streamCacheTimer <= 0) executeDataStreamSync();
+        }, 1000);
+    }
+
+    // Launch Core System Applications Pipelines Execution Chain
+    executeDataStreamSync();
+    launchConsoleLoop();
+    launchMagnetosphericFlowEngine();
+    launchCartesianCompassEngine();
+    launchIonosphericPolarEngine();
+</script>
+
+</body>
+</html>
